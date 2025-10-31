@@ -190,7 +190,7 @@
                     <p>กรุณายืนยันการฝากและถอนผ่าน LINE</p>
                     <p>ลิงก์ LINE</p>
                     <p>
-                        <a href="https://pgbet888.vip/apps-pgbet888" target="_blank" rel="noopener">
+                        <a href="https://pgbet888.vip/line-pgbet888" target="_blank" rel="noopener">
                             <br />
                             <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/line_logo_pgbet888.png" alt="line-qr" /><br />
                         </a>
