@@ -28,6 +28,11 @@
     // Inject CSS styles
     const style = document.createElement('style');
     style.textContent = `
+        .app-images {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
         /* POP UP */
         #popup_overlay {
             position: fixed;
@@ -40,6 +45,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+        #popup_overlay * {
+            font-family: Prompt, sans-serif !important;
         }
         /* container 80% height */
         #popup_container {
