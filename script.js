@@ -67,7 +67,7 @@
             background: #9a0f04;
             background-size: 400%;
             color: #fff;
-            padding: 0 12px;
+            padding: 10px 12px;
             font-size: 20px;
             font-weight: bold;
             display: flex;
