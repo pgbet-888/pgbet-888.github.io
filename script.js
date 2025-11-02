@@ -263,10 +263,10 @@
             margin:0; 
             padding:0;
             position: fixed;
-            bottom: 18rem; 
+            bottom: 22rem; 
         }
         .ard-sosmed.open ul {
-            bottom: 10rem; 
+            bottom: 12rem; 
         }
         .ard-sosmed ul li {
             position:absolute; text-decoration:none; list-style:none;
