@@ -309,6 +309,7 @@
     
         .ard-sosmed ul li div {
             position:absolute; transition:all .3s ease; opacity:0; scale:.1;
+            right: 5rem;
             font-family:"Raleway",sans-serif; font-size:large; background:rgba(0,0,0,1);
             color:var(--accent-color); text-align:center; white-space:nowrap; padding:4px 8px; border-radius:6px;
         }
@@ -336,7 +337,7 @@
         .ard-sosmed ul li:nth-child(6):hover div { transform:translate(65px,-65px); }
     
         @media screen and (max-width:600px){
-            .ard-sosmed{ bottom:5rem; }
+            .ard-sosmed{ bottom:8rem; }
             .attention {
                 top: -3rem;
                 left: 20%;
@@ -345,12 +346,15 @@
                 width: 50px;
                 height: 50px;
             }
+            .ard-sosmed.open ul {
+                bottom: 8.2rem;
+            }
             .ard-sosmed ul {
-                right: 4.7rem;
+                right: 5.5rem;
                 bottom: 5rem;
             }
             .ard-sosmed ul li a img {
-                width: 70%;
+                width: 80%;
             }
         }`;
     
