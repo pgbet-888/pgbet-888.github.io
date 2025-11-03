@@ -282,7 +282,7 @@
         .ard-sosmed.open ul li:nth-child(6) { transform:translateX(200px);   transition-delay:0s;   opacity:1; }
     
         .ard-sosmed ul li a { display:flex; width:80px; height:80px; border-radius:10px; justify-content:center; align-items:center; }
-        .ard-sosmed ul li a img { width:90%; height:auto; }
+        .ard-sosmed ul li a img { width:99.5%; height:auto; }
     
         .hamburg { 
             width:80px; 
@@ -337,7 +337,10 @@
         .ard-sosmed ul li:nth-child(6):hover div { transform:translate(65px,-65px); }
     
         @media screen and (max-width:600px){
-            .ard-sosmed{ bottom:8rem; }
+            .ard-sosmed{ 
+                bottom:8rem;
+                right: 1.15rem;
+            }
             .attention {
                 top: -3rem;
                 left: 20%;
@@ -350,11 +353,11 @@
                 bottom: 8.2rem;
             }
             .ard-sosmed ul {
-                right: 5.5rem;
+                right: 5.8rem;
                 bottom: 5rem;
             }
             .ard-sosmed ul li a img {
-                width: 80%;
+                width: 100%;
             }
         }`;
     
