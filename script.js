@@ -421,6 +421,6 @@
     }
 
     startPopup();
-    startFloatingButton();
+    // startFloatingButton();
 })();
 
