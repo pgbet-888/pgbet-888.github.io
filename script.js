@@ -423,7 +423,7 @@
     if (window.location.pathname === '/') {
         startPopup();
 
-        startFloatingButton();
+        //startFloatingButton();
     }
 })();
 
