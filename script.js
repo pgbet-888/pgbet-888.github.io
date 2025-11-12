@@ -420,7 +420,8 @@
         });
     }
 
-    startPopup();
-    // startFloatingButton();
+    if (window.location.pathname === '/') {
+        startPopup();
+    }
 })();
 
