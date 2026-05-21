@@ -5,8 +5,8 @@
         paths: ['/'],
         delayShow: 1000,
         /** Path to WebP logo (relative to page or absolute URL) */
-        logoUrl: 'pgbet888-logo.webp',
-        bannerUrl: 'pgbet888_ms_21052026.webp', // Banner Image
+        logoUrl: 'https://pgbet-888.github.io/pgbet888-logo.webp',
+        bannerUrl: 'https://pgbet-888.github.io/pgbet888_ms_21052026.webp', // Banner Image
         links: {
             line: 'https://t.ly/savage888line'
         },
@@ -60,7 +60,6 @@
             }, 300);
         }
     }
-
     const startPopup = function () {
         if (document.getElementById('pgx_final_overlay')) return;
 
@@ -68,6 +67,26 @@
         window.pgx_prev_active_element = document.activeElement;
 
         const L = CONFIG.links;
+
+        // Auto-resolve base directory path to support cross-domain embedded asset loading
+        const baseUrl = (function () {
+            if (document.currentScript && document.currentScript.src) {
+                const src = document.currentScript.src;
+                return src.substring(0, src.lastIndexOf('/') + 1);
+            }
+            return '';
+        })();
+
+        const resolveUrl = function (url) {
+            if (!url) return '';
+            if (url.indexOf('://') !== -1 || url.startsWith('//') || url.startsWith('data:')) {
+                return url;
+            }
+            return baseUrl + url;
+        };
+
+        const resolvedLogoUrl = resolveUrl(CONFIG.logoUrl);
+        const resolvedBannerUrl = resolveUrl(CONFIG.bannerUrl);
 
         // --- CSS INJECTION ---
         const style = document.createElement('style');
@@ -538,7 +557,7 @@
                     
                     <div class="pgx-header">
                         <div class="pgx-header-logo">
-                            <img src="${CONFIG.logoUrl}" width="240" height="80" alt="PGBET888 LOGO" decoding="async" loading="eager">
+                            <img src="${resolvedLogoUrl}" width="240" height="80" alt="PGBET888 LOGO" decoding="async" loading="eager">
                         </div>
                     </div>
                     
@@ -546,7 +565,7 @@
                         <h1 class="pgx-content-heading" id="pgx_title">PGBET888 ทางเข้า VIP</h1>
                         
                         <!-- PREMIUM BANNER -->
-                        ${CONFIG.bannerUrl ? '<div class="pgx-banner-wrapper"><a href="' + L.line + '" target="_blank" rel="noopener" tabindex="0"><img src="' + CONFIG.bannerUrl + '" alt="Promotion Banner" decoding="async" loading="eager"></a></div>' : ''}
+                        ${resolvedBannerUrl ? '<div class="pgx-banner-wrapper"><a href="' + L.line + '" target="_blank" rel="noopener" tabindex="0"><img src="' + resolvedBannerUrl + '" alt="Promotion Banner" decoding="async" loading="eager"></a></div>' : ''}
                         
                         <div class="pgx-btn-grid" role="group" aria-label="ช่องทางด่วน">
                             <!-- LINE BUTTON -->
