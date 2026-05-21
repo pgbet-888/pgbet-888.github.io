@@ -1,429 +1,747 @@
-(function() {
+(function () {
     'use strict';
 
-    const startPopup = () => {
-        // Cookie functions
-        function setCookie(name, value, hours) {
-            const date = new Date();
-            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
-            const expires = "expires=" + date.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/";
-        }
-        
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    const CONFIG = {
+        paths: ['/'],
+        delayShow: 1000,
+        /** Path to WebP logo (relative to page or absolute URL) */
+        logoUrl: 'assets/pgbet888-logo.webp',
+        bannerUrl: 'assets/pgbet888_ms_21052026.webp', // Banner Image
+        links: {
+            line: 'https://t.ly/savage888line'
+        },
+        // Master Programmer Enhancements:
+        frequency: 'every-load', // Options: 'every-load', 'once-per-session', 'once-per-day'
+        debugMode: false,              // Set to true to force show on local development
+        officialDomain: 'https://t.ly/savage888'
+    };
+
+    function shouldRun() {
+        if (CONFIG.debugMode) return true;
+
+        // Path checking
+        const isMatchedPath = (!CONFIG.paths || CONFIG.paths.length === 0) || (CONFIG.paths.indexOf(window.location.pathname) !== -1);
+        if (!isMatchedPath) return false;
+
+        // Smart Frequency Capping
+        if (CONFIG.frequency === 'once-per-session') {
+            if (sessionStorage.getItem('pgx_popup_shown')) return false;
+        } else if (CONFIG.frequency === 'once-per-day') {
+            const lastShown = localStorage.getItem('pgx_popup_last_shown');
+            if (lastShown) {
+                const diff = Date.now() - parseInt(lastShown, 10);
+                if (diff < 24 * 60 * 60 * 1000) return false; // 24 Hours
             }
-            return null;
         }
-        
-        // Check if popup was already closed
-        if (getCookie('popup_closed') === 'true') {
-            return; // Don't show popup if cookie exists
+        return true;
+    }
+
+    function closePopup() {
+        const el = document.getElementById('pgx_final_overlay');
+        if (el) {
+            el.style.opacity = '0';
+            const inner = el.querySelector('#pgx_final_container');
+            if (inner) {
+                inner.style.transform = 'perspective(1000px) rotateX(12deg) scale(0.9) translateY(40px)';
+                inner.style.filter = 'blur(4px)';
+            }
+
+            setTimeout(function () {
+                el.remove();
+
+                // Pure DOM: Clean up dynamic style tags to maintain document hygiene
+                const style = document.getElementById('pgx_final_styles');
+                if (style) style.remove();
+
+                // Accessibility: Return focus to previous active element
+                if (window.pgx_prev_active_element && typeof window.pgx_prev_active_element.focus === 'function') {
+                    window.pgx_prev_active_element.focus();
+                }
+            }, 300);
         }
-        
-        // Inject CSS styles
+    }
+
+    const startPopup = function () {
+        if (document.getElementById('pgx_final_overlay')) return;
+
+        // Save active element for accessibility focus restoration
+        window.pgx_prev_active_element = document.activeElement;
+
+        const L = CONFIG.links;
+
+        // --- CSS INJECTION ---
         const style = document.createElement('style');
+        style.id = 'pgx_final_styles';
         style.textContent = `
-            .app-images {
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
+            @keyframes pgxFinalFadeIn {
+                from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+                to { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
             }
-            /* POP UP */
-            #popup_overlay {
+            @keyframes pgxFinal3DEntrance {
+                0% {
+                    opacity: 0;
+                    transform: perspective(1000px) rotateX(12deg) scale(0.9) translateY(40px);
+                    filter: blur(4px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: perspective(1000px) rotateX(0deg) scale(1) translateY(0);
+                    filter: blur(0px);
+                }
+            }
+            @keyframes pgxShineSweep {
+                0% { left: -150%; }
+                50% { left: 150%; }
+                100% { left: 150%; }
+            }
+            @keyframes pgxShieldPulse {
+                0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(209, 171, 102, 0.4)); }
+                50% { transform: scale(1.08); filter: drop-shadow(0 0 10px rgba(209, 171, 102, 0.8)); }
+            }
+
+            #pgx_final_overlay {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.8);
-                z-index: 9999;
+                inset: 0;
+                z-index: 2147483647;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px 15px;
+                background: rgba(10, 6, 4, 0.75);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                font-family: 'Leelawadee UI', 'Noto Sans Thai', 'Segoe UI', Tahoma, sans-serif;
+                animation: pgxFinalFadeIn 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+                transition: opacity 0.3s ease;
+            }
+            #pgx_final_overlay * { box-sizing: border-box; outline: none; }
+            
+            #pgx_final_container {
+                position: relative;
+                width: 100%;
+                max-width: 370px;
+                background: linear-gradient(135deg, rgba(26, 17, 14, 0.96) 0%, rgba(12, 8, 6, 0.98) 100%);
+                border-radius: 20px;
+                border: 1px solid rgba(209, 171, 102, 0.32); 
+                animation: pgxFinal3DEntrance 0.5s cubic-bezier(0.25, 1, 0.2, 1.1) forwards;
+                box-shadow: 
+                    0 25px 60px rgba(0, 0, 0, 0.85), 
+                    0 0 25px rgba(209, 171, 102, 0.15),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.05); 
+                overflow: hidden;
+                transform-style: preserve-3d;
+                will-change: transform;
+            }
+
+            /* Custom mouse spotlight tracker glow */
+            #pgx_glow_effect {
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background: radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(209, 171, 102, 0.09), transparent 80%);
+                transition: background 0.15s ease;
+                z-index: 1;
+            }
+
+            #pgx_final_close {
+                position: absolute;
+                top: 15px;
+                right: 18px;
+                width: 32px;
+                height: 32px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(209, 171, 102, 0.2);
+                border-radius: 50%;
+                color: #c9b088;
+                font-size: 20px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 10;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            #pgx_final_close:hover { 
+                transform: rotate(90deg) scale(1.08); 
+                color: #fff; 
+                border-color: rgba(209, 171, 102, 0.6);
+                box-shadow: 0 0 10px rgba(209, 171, 102, 0.3);
+            }
+            #pgx_final_close:focus-visible {
+                border-color: #d1ab66;
+                box-shadow: 0 0 0 2px rgba(209, 171, 102, 0.4);
+            }
+            
+            .pgx-header {
+                width: 100%;
+                text-align: center;
+                padding: 24px 20px 18px;
+                border-bottom: 1px solid rgba(209, 171, 102, 0.12);
+                position: relative;
+                z-index: 2;
+            }
+            .pgx-header-logo {
                 display: flex;
                 justify-content: center;
                 align-items: center;
             }
-            #popup_overlay * {
-                font-family: Prompt, sans-serif !important;
+            .pgx-header-logo img {
+                max-width: min(240px, 85%);
+                width: auto;
+                height: auto;
+                max-height: 52px;
+                object-fit: contain;
+                display: block;
+                filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
             }
-            /* container 80% height */
-            #popup_container {
-                width: 90%;
-                max-width: 600px;
-                height: 80%;
-                background: #111;
+            .pgx-content-heading {
+                margin: 0 0 16px;
+                padding: 0;
+                font-size: 18px;
+                font-weight: 800;
+                letter-spacing: 0.05em;
+                line-height: 1.35;
+                text-align: center;
+                color: #d1ab66;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+                position: relative;
+                z-index: 2;
+            }
+            
+            #pgx_final_content {
+                padding: 18px 20px 24px;
+                position: relative;
+                z-index: 2;
+            }
+
+            /* Banner Wrapper and interactive styling */
+            .pgx-banner-wrapper {
+                width: 100%;
+                margin-bottom: 15px;
+                border-radius: 14px;
+                overflow: hidden;
+                border: 1px solid rgba(209, 171, 102, 0.25);
+                box-shadow: 
+                    0 8px 20px rgba(0, 0, 0, 0.55), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+            .pgx-banner-wrapper:hover {
+                border-color: rgba(209, 171, 102, 0.65);
+                box-shadow: 0 10px 25px rgba(209, 171, 102, 0.25);
+                transform: translateY(-2px);
+            }
+            .pgx-banner-wrapper a {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+            .pgx-banner-wrapper img {
+                width: 100%;
+                height: auto;
+                display: block;
+                object-fit: cover;
+                transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+            .pgx-banner-wrapper:hover img {
+                transform: scale(1.04);
+            }
+
+            .pgx-btn-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .pgx-btn {
+                position: relative;
+                display: flex;
+                align-items: center;
+                text-decoration: none;
+                padding: 13px 18px;
                 border-radius: 12px;
+                overflow: hidden;
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                background: rgba(255, 255, 255, 0.02);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            }
+            .pgx-btn:hover { 
+                transform: translateY(-3px) scale(1.01);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            .pgx-btn:active { transform: translateY(-1px); }
+            
+            /* Glass Shine sweep on hover */
+            .pgx-btn::before {
+                content: '';
+                position: absolute;
+                top: 0; left: -150%;
+                width: 100%; height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+                transform: skewX(-20deg);
+                transition: left 0.6s ease;
+                z-index: 2;
+            }
+            .pgx-btn:hover::before {
+                left: 150%;
+            }
+
+            .pgx-btn-icon-wrapper {
+                flex-shrink: 0;
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.3s ease;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            }
+            .pgx-btn:hover .pgx-btn-icon-wrapper {
+                transform: scale(1.08) rotate(3deg);
+            }
+            .pgx-btn-svg {
+                width: 20px;
+                height: 20px;
+                color: #fff;
+                display: block;
+            }
+
+            .pgx-btn-text {
                 display: flex;
                 flex-direction: column;
-                overflow: hidden;
-                box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
-                animation: containerGlow 2s infinite alternate;
-            }
-            /* header */
-            #popup_header {
-                background: #9a0f04;
-                background-size: 400%;
-                color: #fff;
-                padding: 10px 12px;
-                font-size: 20px;
-                font-weight: bold;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            #popup_header span {
-                cursor: pointer;
-                font-size: 2rem;
-                font-weight: bold;
-                transition: transform 0.3s;
-            }
-            #popup_header span:hover {
-                transform: rotate(180deg);
-            }
-            /* scrollable content */
-            #popup_content {
+                margin-left: 15px;
+                text-align: left;
                 flex: 1;
-                overflow-y: auto;
-                padding: 18px;
-                text-align: center;
             }
-            /* text styles */
-            #popup_content p {
-                margin: 8px 0;
-                font-size: 18px;
-                font-weight: 600;
-                animation: flashColor 2s infinite linear;
+            .pgx-btn-title { 
+                color: #FFF; 
+                font-size: 16px; 
+                font-weight: 700; 
+                letter-spacing: 0.02em;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.6);
             }
-            /* make every odd/even paragraph flash differently */
-            #popup_content p:nth-child(odd) {
-                animation: flashColor 1.2s infinite alternate;
+            .pgx-btn-sub { 
+                color: #a38c75; 
+                font-size: 11.5px; 
+                margin-top: 1px; 
+                font-weight: 500;
             }
-            #popup_content p:nth-child(even) {
-                animation: flashColorAlt 1.5s infinite alternate;
+            
+            .pgx-btn-arrow {
+                width: 18px;
+                height: 18px;
+                color: rgba(209, 171, 102, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
             }
-            #popup_content img {
-                max-width: 100%;
+            .pgx-btn-arrow svg {
+                width: 100%;
+                height: 100%;
+            }
+            .pgx-btn:hover .pgx-btn-arrow {
+                color: #d1ab66;
+                transform: translateX(4px);
+            }
+
+            /* Custom Palette Glass colors */
+            .pgx-line { 
+                border-color: rgba(125, 195, 112, 0.22);
+            }
+            .pgx-line .pgx-btn-icon-wrapper {
+                background: linear-gradient(135deg, rgba(88, 142, 80, 0.3) 0%, rgba(62, 104, 55, 0.1) 100%);
+                border-color: rgba(125, 195, 112, 0.35);
+            }
+            .pgx-line:hover {
+                background: rgba(88, 142, 80, 0.08);
+                border-color: rgba(125, 195, 112, 0.65);
+                box-shadow: 0 6px 20px rgba(88, 142, 80, 0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+            }
+
+            .pgx-info-box {
+                margin-top: 20px;
+                padding: 16px;
+                border-radius: 14px;
+                text-align: left;
+                line-height: 1.55;
+                background: linear-gradient(165deg, rgba(34, 25, 21, 0.95) 0%, rgba(16, 11, 9, 0.98) 100%);
+                border: 1px solid rgba(201, 176, 136, 0.22);
+                border-left: 3px solid #c9a24d;
+                box-shadow:
+                    0 10px 30px rgba(0, 0, 0, 0.45),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            }
+            .pgx-info-head {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 10px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid rgba(201, 176, 136, 0.12);
+            }
+            .pgx-info-badge {
+                flex-shrink: 0;
+                width: 30px;
+                height: 30px;
                 border-radius: 8px;
-                margin-bottom: 12px;
-                box-shadow: 0 0 10px #fff;
-                animation: pulseImg 2s infinite ease-in-out;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(180deg, rgba(209, 171, 102, 0.18) 0%, rgba(209, 171, 102, 0.04) 100%);
+                border: 1px solid rgba(209, 171, 102, 0.32);
             }
-            .btn-popup-footer {
-                color: #fff;
-                background: #9a0f04;
-                border-width: 0px;
-                border-style: initial;
-                border-color: initial;
-                border-image: initial;
-                min-width: 100px;
-                font-size: 14px;
-                font-weight: normal;
-                line-height: 1.42857;
-                text-align: center;
-                vertical-align: middle;
+            .pgx-shield-svg {
+                width: 16px;
+                height: 16px;
+                color: #d1ab66;
+                display: block;
+                animation: pgxShieldPulse 3s infinite ease-in-out;
+            }
+            .pgx-info-title {
+                font-size: 13.5px;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                color: #e8c992;
+                margin: 0;
+                flex: 1;
+            }
+            .pgx-info-desc {
+                margin: 0;
+                font-size: 12px;
+                font-weight: 400;
+                color: #c9b8a4;
+                line-height: 1.6;
+            }
+
+            /* Click-To-Copy domain interface styling */
+            .pgx-copy-container {
+                margin-top: 14px;
+                padding: 10px 12px;
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.35);
+                border: 1px solid rgba(209, 171, 102, 0.12);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+            }
+            .pgx-copy-label {
+                font-size: 10.5px;
+                color: #8c7662;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+            .pgx-copy-input-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
                 cursor: pointer;
-                user-select: none;
-                padding: 6px 12px;
-                white-space: nowrap;
+                padding: 5px 12px;
+                border-radius: 6px;
+                background: rgba(209, 171, 102, 0.06);
+                border: 1px solid rgba(209, 171, 102, 0.22);
+                transition: all 0.2s ease;
+                position: relative;
+            }
+            .pgx-copy-input-group:hover {
+                background: rgba(209, 171, 102, 0.12);
+                border-color: rgba(209, 171, 102, 0.45);
+            }
+            .pgx-copy-input-group:focus-visible {
+                border-color: #d1ab66;
+                box-shadow: 0 0 0 2px rgba(209, 171, 102, 0.3);
+            }
+            .pgx-copy-val {
+                font-size: 11.5px;
+                font-weight: 700;
+                color: #e8c992;
+                letter-spacing: 0.03em;
+            }
+            .pgx-copy-icon {
+                color: #d1ab66;
+                width: 14px;
+                height: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.2s ease;
+            }
+            .pgx-copy-svg {
+                width: 100%;
+                height: 100%;
+            }
+            
+            /* Copy success tooltip */
+            .pgx-copy-tooltip {
+                position: absolute;
+                bottom: 125%;
+                right: 0;
+                background: #d1ab66;
+                color: #120907;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 4px 10px;
                 border-radius: 4px;
+                opacity: 0;
+                transform: translateY(5px);
+                pointer-events: none;
+                transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                z-index: 100;
             }
-            /* ANIMATIONS */
-            @keyframes flashColor {
-                0% { color: #ff0000; }
-                20% { color: #ff7300; }
-                40% { color: #ffeb00; }
-                60% { color: #47ff00; }
-                80% { color: #00ffee; }
-                100% { color: #ff00e0; }
+            .pgx-copy-tooltip.active {
+                opacity: 1;
+                transform: translateY(0);
             }
-            @keyframes flashColorAlt {
-                0% { color: #00ffee; }
-                25% { color: #2b65ff; }
-                50% { color: #ff00e0; }
-                75% { color: #ffeb00; }
-                100% { color: #ff0000; }
+            .pgx-copy-tooltip::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                right: 14px;
+                border: 5px solid transparent;
+                border-top-color: #d1ab66;
             }
-            @keyframes pulseImg {
-                0%, 100% { transform: scale(1); box-shadow: 0 0 10px #fff; }
-                50% { transform: scale(1.05); box-shadow: 0 0 25px #ff00ff; }
+
+            .pgx-footer-text {
+                margin-top: 18px;
+                text-align: center;
+                font-size: 11px;
+                color: #8c7662;
+                letter-spacing: 0.02em;
+                line-height: 1.6;
             }
-            @keyframes containerGlow {
-                0% { box-shadow: 0 0 20px #ff0000; }
-                50% { box-shadow: 0 0 30px #00ffea; }
-                100% { box-shadow: 0 0 20px #ff00ff; }
+            
+            /* Accessibility: custom focus ring for keyboard navigation */
+            .pgx-btn:focus-visible {
+                border-color: #d1ab66;
+                box-shadow: 0 0 0 2.5px rgba(209, 171, 102, 0.5), inset 0 1px 0 rgba(255,255,255,0.15);
             }
         `;
         document.head.appendChild(style);
-        
-        // Create HTML structure
+
+        // --- HTML INJECTION ---
         const popupHTML = `
-            <div id="popup_overlay">
-                <div id="popup_container">
-                    <div id="popup_header">
-                        <div>ข้อตกลงของการใช้งาน</div>
-                        <p><span class="btn-popup-close" id="popup_close">×</span></p>
+            <div id="pgx_final_overlay" role="dialog" aria-modal="true" lang="th" aria-labelledby="pgx_title">
+                <div id="pgx_final_container">
+                    <div id="pgx_glow_effect"></div>
+                    <button type="button" id="pgx_final_close" aria-label="ปิดโฆษณา">×</button>
+                    
+                    <div class="pgx-header">
+                        <div class="pgx-header-logo">
+                            <img src="${CONFIG.logoUrl}" width="240" height="80" alt="PGBET888 LOGO" decoding="async" loading="eager">
+                        </div>
                     </div>
-                    <div id="popup_content">
-                        <a href="https://pgbet888.vip/apps-pgbet888" target="_blank" rel="noopener">
-                            <br />
-                            <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/pgbet888-warp-vpn.jpg" alt="banner-pgbet888" class="resized-image" /><br />
-                        </a>
-                        <p></p>
-                        <p>DOWNLOAD</p>
-                        <p>WARP 1.1.1.1</p>
-                        <div class="app-images">
-                            <a href="https://play.google.com/store/apps/details?id=com.cloudflare.onedotonedotonedotone" target="_blank" rel="noopener">
-                                <br />
-                                <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/logo_google_play.png" alt="apk-vpn" /><br />
-                            </a>
-                            <br />
-                            <a href="https://apps.apple.com/id/app/1-1-1-1-faster-internet/id1423538627" target="_blank" rel="noopener">
-                                <br />
-                                <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/logo_ios.png" alt="apk-vpn" /><br />
+                    
+                    <div id="pgx_final_content">
+                        <h1 class="pgx-content-heading" id="pgx_title">PGBET888 ทางเข้า VIP</h1>
+                        
+                        <!-- PREMIUM BANNER -->
+                        ${CONFIG.bannerUrl ? '<div class="pgx-banner-wrapper"><a href="' + L.line + '" target="_blank" rel="noopener" tabindex="0"><img src="' + CONFIG.bannerUrl + '" alt="Promotion Banner" decoding="async" loading="eager"></a></div>' : ''}
+                        
+                        <div class="pgx-btn-grid" role="group" aria-label="ช่องทางด่วน">
+                            <!-- LINE BUTTON -->
+                            <a class="pgx-btn pgx-line" href="${L.line}" target="_blank" rel="noopener" tabindex="0">
+                                <div class="pgx-btn-icon-wrapper">
+                                    <svg class="pgx-btn-svg" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M22 10.366c0-4.87-4.486-8.834-10-8.834S2 5.496 2 10.366c0 4.366 3.56 8.028 8.368 8.749.325.07.768.243.88.556.102.285.066.732.032 1.02l-.18 1.08c-.055.33-.26 1.288 1.12.703 1.38-.585 7.443-4.382 10.15-7.5.823-.925 1.43-1.927 1.43-2.915-.002-.233-.002-.46-.002-.693zm-13.88 2.01h-2.12c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h1.62v-1.84H6.002c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.118c.28 0 .5.22 .5.5v2.84c.002.28-.218.5-.498.5zm3.178 0c-.28 0-.5-.22-.5-.5v-2.84c0-.28.22-.5.5-.5s.5.22.5.5v2.84c0 .28-.22.5-.5.5zm4.84 0h-2.118c-.28 0-.5-.22-.5-.5v-2.84c0-.28.22-.5.5-.5s.5.22.5.5v2.34h1.62c.28 0 .5.22 .5.5s-.22.5-.5.5zm4.316-1c0 .28-.22.5-.5.5h-2.12c-.28 0-.5-.22-.5-.5v-2.84c0-.28.22-.5.5-.5h2.12c.28 0 .5.22 .5.5s-.22.5-.5.5h-1.62v.42h1.62c.28 0 .5.22 .5.5s-.22.5-.5.5h-1.62v.42h1.62c.28 0 .5.22 .5.5z"/>
+                                    </svg>
+                                </div>
+                                <div class="pgx-btn-text">
+                                    <span class="pgx-btn-title">LINE 💬</span>
+                                    <span class="pgx-btn-sub">ติดต่อฝ่ายบริการลูกค้า 24 ชม.</span>
+                                </div>
+                                <div class="pgx-btn-arrow" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                                </div>
                             </a>
                         </div>
-                        <hr style="border: 1px solid white; margin-top: 20px; margin-bottom: 20px;" />
-                        <p>ระวังการหลอกลวงที่อ้างชื่อเว็บไซต์ PGBET888</p>
-                        <p>กรุณายืนยันการฝากและถอนผ่าน LINE</p>
-                        <p>ลิงก์ LINE</p>
-                        <p>
-                            <a href="https://pgbet888.vip/line-pgbet888" target="_blank" rel="noopener">
-                                <br />
-                                <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/line_logo_pgbet888.png" alt="line-qr" /><br />
-                            </a>
-                        </p>
-                        <p>คลิกลิงก์ APK PGBET888 ด้านล่าง</p>
-                        <p><!-- Gambar bersebelahan dan tengah --></p>
-                        <div class="app-images">
-                            <a href="https://pgbet888.vip/apps-pgbet888" target="_blank" rel="noopener">
-                                <br />
-                                <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/logo_google_play.png" alt="apk-pgbet888" /><br />
-                            </a>
-                            <br />
-                            <a href="https://pgbet888.vip/apps-pgbet888" target="_blank" rel="noopener">
-                                <br />
-                                <img decoding="async" src="https://ik.imagekit.io/m3zly21z7h/pgbet888/logo_ios.png" alt="apk-pgbet888" /><br />
-                            </a>
+
+                        <!-- VERIFIED INFO CONTAINER -->
+                        <div class="pgx-info-box" role="note">
+                            <div class="pgx-info-head">
+                                <div class="pgx-info-badge">
+                                    <svg class="pgx-shield-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        <rect x="9" y="11" width="6" height="5" rx="1"/>
+                                        <path d="M10 11V9a2 2 0 1 1 4 0v2"/>
+                                    </svg>
+                                </div>
+                                <span class="pgx-info-title">ระบบความปลอดภัย PGBET888</span>
+                            </div>
+                            <p class="pgx-info-desc">เพื่อความปลอดภัยขั้นสูงสุด หลีกเลี่ยงลิงก์หลอกลวงของมิจฉาชีพ กรุณาใช้เฉพาะช่องทางผ่านปุ่มด้านบน หรือบันทึกเว็บไซต์ทางการด้านล่างนี้ และงดการทำธุรกรรมนอกเว็บไซต์ทุกกรณี</p>
+                            
+                            <!-- INTERACTIVE CLIPBOARD COMPONENT -->
+                            <div class="pgx-copy-container">
+                                <span class="pgx-copy-label">ลิงก์อย่างเป็นทางการ</span>
+                                <div class="pgx-copy-input-group" id="pgx_copy_link_btn" role="button" tabindex="0" aria-label="คัดลอกเว็บทางการ">
+                                    <span class="pgx-copy-val">${CONFIG.officialDomain}</span>
+                                    <span class="pgx-copy-icon" aria-hidden="true">
+                                        <svg class="pgx-copy-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                    </span>
+                                    <div class="pgx-copy-tooltip" id="pgx_copy_tooltip">
+                                        <span class="pgx-copy-tooltip-text">คัดลอกสำเร็จ!</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <p><!-- Garis horizontal putih lagi --></p>
-                        <hr style="border: 1px solid white; margin-top: 20px; margin-bottom: 20px;" />
-    
-                        <button class="btn-popup-footer btn-popup-close">Close</button>
+                        
+                        <div class="pgx-footer-text">
+                            © 2026 PGBET888 สงวนลิขสิทธิ์ความปลอดภัยทุกประการ
+                        </div>
                     </div>
-                    <p></p>
                 </div>
             </div>
         `;
-        
-        // Inject HTML into the document body when DOM is ready
+
         function initPopup() {
+            // Write html to body
             document.body.insertAdjacentHTML('beforeend', popupHTML);
-            
-            // Add event listener for close button
-            const popupCloses = document.querySelectorAll('.btn-popup-close');
-            popupCloses.forEach(popupClose => {
-                popupClose.addEventListener('click', function() {
-                    document.querySelector('#popup_overlay').style.display = 'none';
-                    // Set cookie to expire in 12 hours
-                    setCookie('popup_closed', 'true', 12);
+
+            const overlay = document.getElementById('pgx_final_overlay');
+            const container = document.getElementById('pgx_final_container');
+            const closeBtn = document.getElementById('pgx_final_close');
+            const copyBtn = document.getElementById('pgx_copy_link_btn');
+
+            // Set frequency cap in sessionStorage / localStorage
+            if (!CONFIG.debugMode) {
+                if (CONFIG.frequency === 'once-per-session') {
+                    sessionStorage.setItem('pgx_popup_shown', 'true');
+                } else if (CONFIG.frequency === 'once-per-day') {
+                    localStorage.setItem('pgx_popup_last_shown', Date.now().toString());
+                }
+            }
+
+            // Click Handlers
+            if (closeBtn) closeBtn.addEventListener('click', closePopup);
+
+            if (overlay) {
+                overlay.addEventListener('click', function (e) {
+                    if (e.target === overlay) closePopup();
                 });
-            });
-        }
-        
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initPopup);
-        } else {
-            // DOM is already loaded
-            initPopup();
-        }
-    }
-    
-    const startFloatingButton = () => {
-        // ====== CONFIG (boleh diubah) ======
-        const ROOT_ID = 'ard-sosmed-root';
-        const OPEN_BY_DEFAULT = false; // true = mulai terbuka
-    
-        // Stop kalau sudah terpasang
-        if (document.getElementById(ROOT_ID)) return;
-    
-        // ====== CSS ======
-        const css = `
-        :root { --accent-color: #ffcc00; }
-    
-        .ard-sosmed {
-            display:block; cursor:pointer; position:fixed; bottom:15%; right:10px;
-            font-family:"Raleway",sans-serif; z-index:79;
-        }
-        .ard-sosmed ul { 
-            margin:0; 
-            padding:0;
-            position: fixed;
-            bottom: 22rem; 
-        }
-        .ard-sosmed.open ul {
-            bottom: 12rem; 
-        }
-        .ard-sosmed ul li {
-            position:absolute; text-decoration:none; list-style:none;
-            transform:translate(0,0) rotate(360deg);
-            transition:all .5s ease; opacity:0;
-        }
-    
-        .ard-sosmed.open ul li:nth-child(1) { transform:translateY(-385px); transition-delay:.20s; opacity:1; }
-        .ard-sosmed.open ul li:nth-child(2) { transform:translate(0,-310px); transition-delay:.16s; opacity:1; }
-        .ard-sosmed.open ul li:nth-child(3) { transform:translate(0,-235px); transition-delay:.12s; opacity:1; }
-        .ard-sosmed.open ul li:nth-child(4) { transform:translate(0,-160px); transition-delay:.08s; opacity:1; }
-        .ard-sosmed.open ul li:nth-child(5) { transform:translate(0,-85px);  transition-delay:.04s; opacity:1; }
-        .ard-sosmed.open ul li:nth-child(6) { transform:translateX(200px);   transition-delay:0s;   opacity:1; }
-    
-        .ard-sosmed ul li a { display:flex; width:80px; height:80px; border-radius:10px; justify-content:center; align-items:center; }
-        .ard-sosmed ul li a img { width:99.5%; height:auto; }
-    
-        .hamburg { 
-            width:80px; 
-            height:80px; 
-            display:flex; 
-            flex-direction:column; 
-            justify-content:center; 
-            align-items:center; 
-            border: none;
-            background: none;
-            cursor: pointer;
-        }
-        .bar1,.bar2,.bar3 {
-            width:80%; height:5px; background-color:var(--accent-color);
-            margin:6px auto; transition:.4s; position:relative; transform:translateY(-1px);
-        }
-        .ard-sosmed.open .bar1 { transform:translate(0,10px) rotate(-225deg); }
-        .ard-sosmed.open .bar2 { opacity:0; transform:translate(0,-6px) rotate(-225deg); }
-        .ard-sosmed.open .bar3 { transform:translate(0,-12px) rotate(-315deg); }
-    
-        .attention { position:absolute; top:-32px; left:0; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5); }
-        .attention.whore { opacity:1; transition:opacity .3s; }
-        .ard-sosmed.open .attention.whore { opacity:0; }
-    
-        .ard-sosmed ul li div {
-            position:absolute; transition:all .3s ease; opacity:0; scale:.1;
-            right: 5rem;
-            font-family:"Raleway",sans-serif; font-size:large; background:rgba(0,0,0,1);
-            color:var(--accent-color); text-align:center; white-space:nowrap; padding:4px 8px; border-radius:6px;
-        }
-        .ard-sosmed ul li:hover div { 
-            opacity:1; scale:1;
-        }
-    
-        /* Tooltip posisi */
-        .ard-sosmed ul li:nth-child(1) div { transform:translateY(-240px); }
-        .ard-sosmed ul li:nth-child(1):hover div { transform:translateY(-95px); }
-    
-        .ard-sosmed ul li:nth-child(2) div { transform:translateY(-175px); }
-        .ard-sosmed ul li:nth-child(2):hover div { transform:translate(30px,-95px); }
-    
-        .ard-sosmed ul li:nth-child(3) div { transform:translateY(-150px); }
-        .ard-sosmed ul li:nth-child(3):hover div { transform:translate(50px,-90px); }
-    
-        .ard-sosmed ul li:nth-child(4) div { transform:translateX(160px); }
-        .ard-sosmed ul li:nth-child(4):hover div { transform:translate(50px,-90px); }
-    
-        .ard-sosmed ul li:nth-child(5) div { transform:translate(110px,70px); }
-        .ard-sosmed ul li:nth-child(5):hover div { transform:translate(62px,-80px); }
-    
-        .ard-sosmed ul li:nth-child(6) div { transform:translate(55px,135px); }
-        .ard-sosmed ul li:nth-child(6):hover div { transform:translate(65px,-65px); }
-    
-        @media screen and (max-width:600px){
-            .ard-sosmed{ 
-                bottom:8rem;
-                right: 1.15rem;
             }
-            .attention {
-                top: -3rem;
-                left: 20%;
-            }
-            .hamburg {
-                width: 50px;
-                height: 50px;
-            }
-            .ard-sosmed.open ul {
-                bottom: 8.2rem;
-            }
-            .ard-sosmed ul {
-                right: 5.8rem;
-                bottom: 5rem;
-            }
-            .ard-sosmed ul li a img {
-                width: 100%;
-            }
-        }`;
-    
-        const style2 = document.createElement('style');
-        style2.textContent = css;
-        document.head.appendChild(style2);
-    
-        // ====== HTML ======
-        const container = document.createElement('div');
-        container.id = ROOT_ID;
-        container.innerHTML = `
-            <div class="ard-sosmed${OPEN_BY_DEFAULT ? ' open' : ''}">
-            <button class="hamburg" type="button" aria-label="Toggle quick links">
-                <img src="https://s3.cdn-thai.com/pgbet888/floating-button-ms/main-resize.gif" alt="Hamburg Icon" width="88" height="88">
-            </button>
-            <ul aria-label="Quick links">
-                <li>
-                    <a href="https://pgbet888.vip/vpn-download" target="_blank" rel="noopener">
-                        <img src="https://s3.cdn-thai.com/pgbet888/floating-button-ms/vpn-resize.gif" alt="VPN">
-                    </a>
-                    <div>VPN</div>
-                </li>
-                <li>
-                    <a href="https://pgbet888.vip/apps-pgbet888" target="_blank" rel="noopener">
-                        <img src="https://s3.cdn-thai.com/pgbet888/floating-button-ms/android-resize.gif" alt="ANDROID">
-                    </a>
-                    <div>ANDROID</div>
-                </li>
-                <li>
-                    <a href="https://pgbet888.vip/apps-pgbet888" target="_blank" rel="noopener">
-                        <img src="https://s3.cdn-thai.com/pgbet888/floating-button-ms/ios-resize.gif" alt="IOS">
-                    </a>
-                    <div>IOS</div>
-                </li>
-                <li>
-                    <a href="https://pgbet888.vip/line-pgbet888" target="_blank" rel="noopener">
-                        <img src="https://s3.cdn-thai.com/pgbet888/floating-button-ms/line-resize.gif" alt="Line">
-                    </a>
-                    <div>LINE</div>
-                </li>
-            </ul>
-            </div>
-        `;
-        document.body.appendChild(container);
-    
-        // ====== Interaksi ======
-        const root = container.querySelector('.ard-sosmed');
-        const toggleBtn = container.querySelector('.hamburg');
-        const attention = container.querySelector('.attention.whore');
-    
-        function toggleOpen() {
-            root.classList.toggle('open');
-            attention?.classList.remove('whore');
-        }
-    
-        // click / keyboard
-        toggleBtn.addEventListener('click', toggleOpen);
-        toggleBtn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOpen(); }
-        });
-    }
 
-    if (window.location.pathname === '/') {
+            // Spotlight cursor effect
+            if (container) {
+                container.addEventListener('mousemove', function (e) {
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    container.style.setProperty('--mouse-x', x + 'px');
+                    container.style.setProperty('--mouse-y', y + 'px');
+                });
+            }
+
+            // Copy clip functionality
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const copyText = CONFIG.officialDomain;
+
+                    const handleSuccess = () => {
+                        const tooltip = document.getElementById('pgx_copy_tooltip');
+                        if (tooltip) {
+                            tooltip.classList.add('active');
+                            const iconWrap = copyBtn.querySelector('.pgx-copy-icon');
+                            if (iconWrap) {
+                                const prevHTML = iconWrap.innerHTML;
+                                iconWrap.innerHTML = `
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#588e50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                `;
+                                setTimeout(() => { iconWrap.innerHTML = prevHTML; }, 2000);
+                            }
+                            setTimeout(() => { tooltip.classList.remove('active'); }, 2000);
+                        }
+                    };
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(copyText).then(handleSuccess).catch(() => {
+                            fallbackCopy(copyText, handleSuccess);
+                        });
+                    } else {
+                        fallbackCopy(copyText, handleSuccess);
+                    }
+                });
+
+                copyBtn.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        copyBtn.click();
+                    }
+                });
+            }
+
+            function fallbackCopy(text, cb) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    cb();
+                } catch (err) {
+                    console.error('Copy fallback failed', err);
+                }
+                document.body.removeChild(ta);
+            }
+
+            // Accessibility: Modal Keyboard Focus Trapping & ESC key dismissal
+            if (overlay && container) {
+                const focusableElements = container.querySelectorAll('button, a[href], [tabindex="0"]');
+                if (focusableElements.length > 0) {
+                    const firstEl = focusableElements[0];
+                    const lastEl = focusableElements[focusableElements.length - 1];
+
+                    // Autofocus trigger on entry
+                    setTimeout(() => { firstEl.focus(); }, 150);
+
+                    overlay.addEventListener('keydown', function (e) {
+                        if (e.key === 'Tab') {
+                            if (e.shiftKey) { /* Shift + Tab */
+                                if (document.activeElement === firstEl) {
+                                    lastEl.focus();
+                                    e.preventDefault();
+                                }
+                            } else { /* Tab */
+                                if (document.activeElement === lastEl) {
+                                    firstEl.focus();
+                                    e.preventDefault();
+                                }
+                            }
+                        } else if (e.key === 'Escape') {
+                            closePopup();
+                        }
+                    });
+                }
+            }
+        }
+
+        setTimeout(() => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPopup);
+            } else {
+                initPopup();
+            }
+        }, CONFIG.delayShow);
+    };
+
+    if (shouldRun()) {
         startPopup();
-
-        //startFloatingButton();
     }
 })();
-
