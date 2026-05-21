@@ -5,8 +5,8 @@
         paths: ['/'],
         delayShow: 1000,
         /** Path to WebP logo (relative to page or absolute URL) */
-        logoUrl: 'assets/pgbet888-logo.webp',
-        bannerUrl: 'assets/pgbet888_ms_21052026.webp', // Banner Image
+        logoUrl: 'pgbet888-logo.webp',
+        bannerUrl: 'pgbet888_ms_21052026.webp', // Banner Image
         links: {
             line: 'https://t.ly/savage888line'
         },
