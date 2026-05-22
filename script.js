@@ -8,12 +8,12 @@
         logoUrl: 'https://pgbet-888.github.io/pgbet888-logo.webp',
         bannerUrl: 'https://pgbet-888.github.io/pgbet888_ms_21052026.webp', // Banner Image
         links: {
-            line: 'https://t.ly/savage888line'
+            line: 'https://pgbet888.vip/line-pgbet888'
         },
         // Master Programmer Enhancements:
         frequency: 'every-load', // Options: 'every-load', 'once-per-session', 'once-per-day'
         debugMode: false,              // Set to true to force show on local development
-        officialDomain: 'https://t.ly/savage888'
+        officialDomain: 'https://pgbet888.vip/dj2222'
     };
 
     function shouldRun() {
@@ -440,44 +440,49 @@
             /* Click-To-Copy domain interface styling */
             .pgx-copy-container {
                 margin-top: 14px;
-                padding: 10px 12px;
-                border-radius: 8px;
-                background: rgba(0, 0, 0, 0.35);
-                border: 1px solid rgba(209, 171, 102, 0.12);
+                padding: 12px;
+                border-radius: 10px;
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(209, 171, 102, 0.16);
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                justify-content: space-between;
-                gap: 10px;
+                gap: 8px;
             }
             .pgx-copy-label {
-                font-size: 10.5px;
-                color: #8c7662;
+                font-size: 11px;
+                color: #a38c75;
                 font-weight: 600;
                 text-transform: uppercase;
-                letter-spacing: 0.08em;
+                letter-spacing: 0.06em;
+                white-space: nowrap;
+                text-align: center;
             }
             .pgx-copy-input-group {
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 8px;
                 cursor: pointer;
-                padding: 5px 12px;
-                border-radius: 6px;
-                background: rgba(209, 171, 102, 0.06);
-                border: 1px solid rgba(209, 171, 102, 0.22);
-                transition: all 0.2s ease;
+                padding: 8px 12px;
+                border-radius: 8px;
+                background: rgba(209, 171, 102, 0.05);
+                border: 1px solid rgba(209, 171, 102, 0.25);
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
+                width: 100%;
             }
             .pgx-copy-input-group:hover {
                 background: rgba(209, 171, 102, 0.12);
-                border-color: rgba(209, 171, 102, 0.45);
+                border-color: rgba(209, 171, 102, 0.5);
+                box-shadow: 0 0 12px rgba(209, 171, 102, 0.15);
             }
             .pgx-copy-input-group:focus-visible {
                 border-color: #d1ab66;
                 box-shadow: 0 0 0 2px rgba(209, 171, 102, 0.3);
             }
             .pgx-copy-val {
-                font-size: 11.5px;
+                font-size: 12px;
                 font-weight: 700;
                 color: #e8c992;
                 letter-spacing: 0.03em;
@@ -601,7 +606,6 @@
                             
                             <!-- INTERACTIVE CLIPBOARD COMPONENT -->
                             <div class="pgx-copy-container">
-                                <span class="pgx-copy-label">ลิงก์อย่างเป็นทางการ</span>
                                 <div class="pgx-copy-input-group" id="pgx_copy_link_btn" role="button" tabindex="0" aria-label="คัดลอกเว็บทางการ">
                                     <span class="pgx-copy-val">${CONFIG.officialDomain}</span>
                                     <span class="pgx-copy-icon" aria-hidden="true">
@@ -614,6 +618,7 @@
                                         <span class="pgx-copy-tooltip-text">คัดลอกสำเร็จ!</span>
                                     </div>
                                 </div>
+                                <span class="pgx-copy-label">ลิงก์อย่างเป็นทางการ</span>
                             </div>
                         </div>
                         
