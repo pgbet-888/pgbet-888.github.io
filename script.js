@@ -13,7 +13,7 @@
         // Master Programmer Enhancements:
         frequency: 'every-load', // Options: 'every-load', 'once-per-session', 'once-per-day'
         debugMode: false,              // Set to true to force show on local development
-        officialDomain: 'https://pgbet888.vip/dj2222'
+        officialDomain: 'https://pgbet888.vip/pgbet888'
     };
 
     function shouldRun() {
